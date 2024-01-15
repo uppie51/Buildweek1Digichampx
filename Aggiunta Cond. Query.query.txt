@@ -1,0 +1,201 @@
+#1.Analisi delle Vendite Mensili - Domanda: Trova il totale delle vendite per ogni mese
+SELECT monthname (DataTransazione) AS MESE, SUM(ImportoTransazione) AS TOTALE_VENDITE
+FROM transazioni
+group by MESE
+ORDER BY TOTALE_VENDITE DESC;
+
+#Aggiunta cond. Query.1 
+trova il tot vendite*ogni mese  con anno 2022 + metodo spedizione =Corriere Express, e i mesi ordinati in modo crescente.
+Select (MetodoSpedizione) AS corriere, YEAR(DataSpedizione) AS anno, MONTHNAME(DataTransazione) AS mese, SUM(importotoaleTransazione) AS totale_vendite
+FROM Transazioni_datasheet1
+WHERE YEAR(DataTransazione)=2022
+AND MetodoSpedizione='Corriere Express'
+GROUP BY anno,mese,corriere
+ORDER BY anno,MONTH(datatransazione),Totale_Vendite;
+
+
+
+#2.Prodotti più Venduti - Domanda: Identifica i tre prodotti più venduti e la loro quantità venduta
+select NomeProdotto, sum(QuantitaAcquistata) as SumQNT
+from prodotti p
+join  transazioni t
+on t.ProdottoID=p.ProdottoID
+group by NomeProdotto
+order by SumQNT desc
+limit 3;
+
+#Aggiunta con.Query2 trova i 3 prodotti piu venduti e  la loro quantita superiore a 10 
+Select NomeProdotto, sum(QuantitaAcquistata) as SumQNT
+from prodotti p
+join  transazioni t
+on t.ProdottoID=p.ProdottoID
+group by NomeProdotto
+Having >10
+order by SumQNT desc
+limit 3;
+
+
+
+#3.Analisi Cliente - Domanda: Trova il cliente che ha effettuato il maggior numero di acquisti.
+select NomeCliente, count(TransazioneID) as QntTransaz
+from clienti c
+join transazioni t
+on c.ClienteID=t.ClienteID
+group by NomeCliente
+order by QntTransaz desc
+limit 1;
+
+
+#Aggiunta cond.Query 3 trova i clienti che hano effetutatto il maggior numero di acquisti e abbia comprato prodotti di una categoria specifica
+Select NomeCliente  COUNT(IDTransazione) AS QntTra, Categoria
+From clienti c 
+JOIN transazioni t ON c.ClienteId=t.ClienteID
+JOIN Prodotti p ON t.ProdottoID=p.ProdottoID
+WHERE  Categoria='Abbigliamento'
+GROUP BY NomeCliente
+ORDER BY QntTra Desc
+Limit 1;
+
+
+
+
+
+
+#5.Analisi Categoria Prodotto - Domanda: Determina la categoria di prodotto con il maggior numero di vendite.
+select Categoria, sum(QuantitaAcquistata) as QntAcquisti
+from transazioni t
+join prodotti p on t.ProdottoID=p.ProdottoID
+group by Categoria
+order by QntAcquisti desc;
+
+
+
+
+#Aggiunta Cond.Query5 determia la categoria di prodotto con il maggior num di vendite  di una determinata categoria
+
+select Categoria, sum(QuantitaAcquistata) as QntAcquisti
+from transazioni t
+join prodotti p on t.ProdottoID=p.ProdottoID
+Where Cateogira='elettronica'
+group by Categoria
+order by QntAcquisti desc;
+
+
+
+#Aggiunta Cond Query 5 
+SELECT DataTransazione, Categoria, MAX(TotaleVendite) AS TotaleVendite
+FROM (
+    SELECT DataTransazione, Categoria, SUM(QuantitaAcquistata) AS TotaleVendite
+    FROM transazioni_dataset___sheet1 t
+    JOIN prodotti_dataset___sheet1 p  ON t.ProdottoID = p.ProdottoID
+    WHERE t.DataTransazione BETWEEN '2022-01-01' AND '2022-12-31' 
+    GROUP BY DataTransazione, Categoria
+) AS VenditePerGiorno
+GROUP BY DataTransazione;
+
+
+
+
+
+#7.Spedizioni Riuscite - Domanda: Calcola la percentuale di spedizioni con "Consegna Riuscita"
+select count(StatusConsegna) *100 / (select count(StatusConsegna) from spedizioni) as PercentStatCons
+from spedizioni 
+where StatusConsegna = 'Consegna Riuscita';
+
+#aggiunta Cond.Query 7 calcola percentuale di spedizioni con'consegna riuscita' considerando  ciascun metodo di spedizione.
+SELECT MetodoSpedizione,COUNT(StatusConsegna) * 100 /(Select COUNT(*) FROM Spedizioni)
+FROM spedizioni 
+WHERE StatusConsegna = 'Consegna Riuscita'
+GROUP BY 'MetodoSpedizione';
+
+
+
+
+#10.Quantità di Prodotti Disponibili - Domanda: Determina la quantità media disponibile per categoria di prodotto
+select Categoria, avg(QuantitaDisponibile) MediaQntD
+from prodotti
+group by Categoria
+order by MediaQntD desc; 
+
+
+
+#Aggiunta Cond Query 10  determina la quantita disponibile per categoria di prodotto con prezzo > 50 + q disponibile > 30
+
+SELECT Categoria, AVG(QuantitaDisponibile) AS MediaQntD, Prezzo
+FROM prodotti_dataset___sheet1
+WHERE Prezzo > 50 
+GROUP BY Categoria
+HAVING AVG(QuantitaDisponibile) > 30 
+ORDER BY MediaQntD DESC;
+
+
+
+
+
+
+#16.Analisi dei Prodotti in Magazzino - Domanda: Trova la quantità totale di prodotti disponibili in magazzino
+select sum(QuantitaDisponibile) as QntTot
+from prodotti;
+
+
+#Aggiunta Cond Query 16 Trova la  q totle di prodotti disponibili in magazzino di una categoria specifica
+SELECT Categoria, SUM(QuantitaDisponibile) AS QntTot
+FROM prodotti_dataset___sheet1
+WHERE Categoria IN(SELECT Categoria
+    FROM prodotti_dataset___sheet1
+  WHERE Categoria='libri')
+  GROUP BY Categoria;
+
+
+#17 Clienti Senza Acquisti - Domanda: Identifica i clienti che non hanno effettuato alcun acquisto
+select count(c.ClienteID), t.TransazioneID
+from clienti c
+left join transazioni t 
+on c.ClienteID=t.ClienteID
+where t.TransazioneID is NULL;
+
+
+
+#Aggiunta Cond Query 17 
+Identifica i clienti che non hanno effettuato alcun acquisto  e che hanno effettuato la registrazione in un anno specifico 2022.
+SELECT  COUNT(c.ClienteID) AS NumClientiSenzaTrans, c.NomeCliente, c.DataRegistrazione
+FROM clienti_dataset___sheet1 c 
+LEFT JOIN transazioni_dataset___sheet1  t ON c.ClienteID = t.ClienteID
+WHERE t.IDTransazione IS NULL 
+AND YEAR(c.DataRegistrazione) = 2022;
+
+
+#18 Analisi Annuale delle Vendite - Domanda: Calcola il totale delle vendite per ogni anno
+ select sum(Prezzo * QuantitaAcquistata) as TotVendite, year(DataSpedizione) as Anno
+ from transazioni t
+ join prodotti p 
+ on t.prodottoID = p.prodottoID
+ group by Anno;
+
+#Aggiunta Cond. Query 18 calcola il totale delle vendite per ogni anno includendo anche la quantità massima acquistata per ciascun prodotto in quell'anno
+SELECT
+    YEAR(t.DataSpedizione) AS Anno,
+    MAX(t.QuantitaAcquistata) AS MaxQuantita,
+    SUM(p.Prezzo * t.QuantitaAcquistata) AS TotVendite
+FROM
+    transazioni_dataset___sheet1 t
+JOIN (
+    SELECT
+        ProdottoID,
+        MAX(QuantitaAcquistata) AS MaxQuantita
+    FROM
+        transazioni_dataset___sheet1 
+    GROUP BY
+        ProdottoID
+) max_quantita ON t.ProdottoID = max_quantita.ProdottoID AND t.QuantitaAcquistata = max_quantita.MaxQuantita
+JOIN
+    prodotti_dataset___sheet1 p ON t.ProdottoID = p.ProdottoID
+GROUP BY
+    Anno;
+ 
+
+
+
+
+
+
